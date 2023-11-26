@@ -87,6 +87,7 @@ router.post("/products", async (req, res) => {
       ]);
 
     console.log("Product created successfully");
+    res.status(201).json({ message: "Product created successfully" });
   } catch (error) {
     console.error("Error during product creation:", error);
     res.status(500).json({ error: "Internal server error" });
