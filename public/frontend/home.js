@@ -98,15 +98,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  async function deleteCategory(categoryId) {
-    const response = await fetch(`/categories/${categoryId}`, {
-      method: "DELETE",
-    });
-
-    fetchCategoryList();
-    fetchCategoriesForSelect();
-  }
-
   async function fetchCategoriesForSelect() {
     const categoriesResponse = await fetch("/categories");
     const categories = await categoriesResponse.json();
@@ -127,6 +118,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     fetchProductList();
+    fetchCategoriesForSelect();
+  }
+
+  async function deleteCategory(categoryId) {
+    const response = await fetch(`/categories/${categoryId}`, {
+      method: "DELETE",
+    });
+
+    fetchCategoryList();
     fetchCategoriesForSelect();
   }
 
