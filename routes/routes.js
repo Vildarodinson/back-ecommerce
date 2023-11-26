@@ -135,4 +135,56 @@ router.delete("/products/:id", async (req, res) => {
   }
 });
 
+router.post("/categories", async (req, res) => {
+  const { categoryName } = req.body;
+
+  try {
+    const insertCategorySql =
+      "INSERT INTO categories (category_name) VALUES (?)";
+    await db.promise().query(insertCategorySql, [categoryName]);
+
+    console.log("Category created successfully");
+    res.status(201).json({ message: "Category created successfully" });
+  } catch (error) {
+    console.error("Error during category creation:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/categories", async (req, res) => {
+  try {
+    const categoriesSql = "SELECT * FROM categories";
+    const [categories] = await db.promise().query(categoriesSql);
+
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error("Error fetching category list:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/categories/:id", async (req, res) => {
+  const categoryId = req.params.id;
+
+  try {
+    // Checking
+    const [categoryResult] = await db
+      .promise()
+      .query("SELECT * FROM categories WHERE category_id = ?", [categoryId]);
+
+    if (categoryResult.length === 0) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    await db
+      .promise()
+      .query("DELETE FROM categories WHERE category_id = ?", [categoryId]);
+
+    console.log("Category deleted successfully");
+    res.status(200).json({ message: "Category deleted successfully" });
+  } catch (error) {
+    console.error("Error during category deletion:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 module.exports = router;
