@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const productForm = document.getElementById("productForm");
+  const productList = document.getElementById("productList");
 
   productForm.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -25,5 +26,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const result = await response.json();
     alert(result.message);
+
+    productForm.reset();
+
+    fetchProductList();
   });
+
+  async function fetchProductList() {
+    const productsResponse = await fetch("/products");
+    const products = await productsResponse.json();
+
+    productList.innerHTML = "";
+
+    products.forEach((product) => {
+      console.log(product);
+      const listItem = document.createElement("li");
+      listItem.textContent = `Name: ${product.product_name}, Price: ${product.price}, Category: ${product.category_name}, Description: ${product.description}`;
+      productList.appendChild(listItem);
+    });
+  }
+
+  fetchProductList();
 });

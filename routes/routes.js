@@ -94,4 +94,20 @@ router.post("/products", async (req, res) => {
   }
 });
 
+router.get("/products", async (req, res) => {
+  try {
+    const productsSql = `
+      SELECT products.product_id, products.product_name, categories.category_name, products.price, products.description
+      FROM products
+      JOIN categories ON products.category_id = categories.category_id
+    `;
+    const [products] = await db.promise().query(productsSql);
+
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error fetching product list:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
