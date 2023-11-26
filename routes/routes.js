@@ -87,7 +87,6 @@ router.post("/products", async (req, res) => {
       ]);
 
     console.log("Product created successfully");
-    res.status(201).json({ message: "Product created successfully" });
   } catch (error) {
     console.error("Error during product creation:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -106,6 +105,31 @@ router.get("/products", async (req, res) => {
     res.status(200).json(products);
   } catch (error) {
     console.error("Error fetching product list:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/products/:id", async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    // Checking
+    const [productResult] = await db
+      .promise()
+      .query("SELECT * FROM products WHERE product_id = ?", [productId]);
+
+    if (productResult.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    await db
+      .promise()
+      .query("DELETE FROM products WHERE product_id = ?", [productId]);
+
+    console.log("Product deleted successfully");
+    res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.error("Error during product deletion:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

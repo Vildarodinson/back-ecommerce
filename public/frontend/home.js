@@ -24,8 +24,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }),
     });
 
-    const result = await response.json();
-    alert(result.message);
 
     productForm.reset();
 
@@ -42,8 +40,25 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log(product);
       const listItem = document.createElement("li");
       listItem.textContent = `Name: ${product.product_name}, Price: ${product.price}, Category: ${product.category_name}, Description: ${product.description}`;
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", function () {
+        deleteProduct(product.product_id);
+      });
+
+      listItem.appendChild(deleteButton);
+
       productList.appendChild(listItem);
     });
+  }
+
+  async function deleteProduct(productId) {
+    const response = await fetch(`/products/${productId}`, {
+      method: "DELETE",
+    });
+
+    fetchProductList();
   }
 
   fetchProductList();
