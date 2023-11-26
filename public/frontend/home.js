@@ -93,17 +93,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function handleUpdateProduct(productId) {
-    // Fetch product details based on the product ID
     const response = await fetch(`/products/${productId}`);
     const productDetails = await response.json();
 
-    // Set the update form to update mode
     updateProductForm.setAttribute("data-product-id", productId);
 
-    // Fetch categories before populating the update form
     await fetchCategoriesForSelect();
 
-    // Populate the update form with existing product details
     document.getElementById("updateProductName").value =
       productDetails.product_name;
     document.getElementById("updateProductPrice").value = productDetails.price;
@@ -111,7 +107,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("updateProductDescription").value =
       productDetails.description;
 
-    // Show the update form
     updateProductForm.style.display = "block";
   }
 
