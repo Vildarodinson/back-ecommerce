@@ -58,4 +58,40 @@ router.post("/login", async (req, res) => {
   res.send("Login successful!");
 });
 
+router.post("/products", async (req, res) => {
+  const { productName, productPrice, category, productDescription } = req.body;
+
+  try {
+    // Checking
+    const [categoryResult] = await db
+      .promise()
+      .query("SELECT category_id FROM categories WHERE category_name = ?", [
+        category,
+      ]);
+
+    if (categoryResult.length === 0) {
+      return res.status(400).json({ error: "Invalid category" });
+    }
+
+    const insertProductSql = `
+        INSERT INTO products (product_name, category_id, price, description)
+        VALUES (?, ?, ?, ?)
+    `;
+    await db
+      .promise()
+      .query(insertProductSql, [
+        productName,
+        categoryResult[0].category_id,
+        productPrice,
+        productDescription,
+      ]);
+
+    console.log("Product created successfully");
+    res.status(201).json({ message: "Product created successfully" });
+  } catch (error) {
+    console.error("Error during product creation:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
