@@ -11,13 +11,15 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(routes);
 
-app.get("/*.html", (req, res) => {
-  const fileName = req.params[0];
-  res.sendFile(path.join(__dirname, "public", "frontend", `${fileName}.html`));
-});
+// app.get("/*.html", (req, res) => {
+//   const fileName = req.params[0];
+//   res.sendFile(path.join(__dirname, "public", "frontend", `${fileName}.html`));
+// });
+
+app.use("/", express.static(path.join(__dirname, "public", "frontend")));
 
 app.get("/", (req, res) => {
-  res.redirect("/register.html");
+  res.redirect("login.html");
 });
 
 app.listen(PORT, () => {
