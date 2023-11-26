@@ -110,6 +110,72 @@ router.get("/products", async (req, res) => {
   }
 });
 
+router.get("/products/:id", async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    const [productResult] = await db
+      .promise()
+      .query("SELECT * FROM products WHERE product_id = ?", [productId]);
+
+    if (productResult.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.status(200).json(productResult[0]);
+  } catch (error) {
+    console.error("Error fetching product details:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/products/:id", async (req, res) => {
+  const productId = req.params.id;
+  const { productName, productPrice, category, productDescription } = req.body;
+
+  try {
+    // Checking
+    const [productResult] = await db
+      .promise()
+      .query("SELECT * FROM products WHERE product_id = ?", [productId]);
+
+    if (productResult.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const [categoryResult] = await db
+      .promise()
+      .query("SELECT category_id FROM categories WHERE category_name = ?", [
+        category,
+      ]);
+
+    if (categoryResult.length === 0) {
+      return res.status(400).json({ error: "Invalid category" });
+    }
+
+    const updateProductSql = `
+      UPDATE products
+      SET product_name = ?, category_id = ?, price = ?, description = ?
+      WHERE product_id = ?
+    `;
+    await db
+      .promise()
+      .query(updateProductSql, [
+        productName,
+        categoryResult[0].category_id,
+        productPrice,
+        productDescription,
+        productId,
+      ]);
+
+    console.log("Product updated successfully");
+    res.status(200).json({ message: "Product updated successfully" });
+  } catch (error) {
+    console.error("Error during product update:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.delete("/products/:id", async (req, res) => {
   const productId = req.params.id;
 
