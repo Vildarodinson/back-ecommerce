@@ -19,6 +19,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (result.includes("successful")) {
         document.getElementById("loginMessage").textContent = result;
+        setTimeout(function () {
+          window.location.href = "home.html";
+        }, 10);
       } else {
         document.getElementById("loginMessage").textContent = result;
       }
