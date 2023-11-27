@@ -48,27 +48,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const productDescription =
       document.getElementById("productDescription").value;
 
-    if (productForm.getAttribute("data-mode") === "update") {
-      const productId = productForm.getAttribute("data-product-id");
-      await updateProduct(
-        productId,
-        productName,
-        productPrice,
-        category,
-        productDescription
-      );
-    } else {
-      await createProduct(
-        productName,
-        productPrice,
-        category,
-        productDescription
-      );
-    }
+    const productId = productForm.getAttribute("data-product-id");
+
+    await (productId
+      ? updateProduct(
+          productId,
+          productName,
+          productPrice,
+          category,
+          productDescription
+        )
+      : createProduct(productName, productPrice, category, productDescription));
 
     productForm.reset();
-
-    productForm.removeAttribute("data-mode");
     productForm.removeAttribute("data-product-id");
 
     fetchProductList();
@@ -167,16 +159,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const categoryName = document.getElementById("categoryName").value;
 
-    if (categoryForm.getAttribute("data-mode") === "update") {
-      const categoryId = categoryForm.getAttribute("data-category-id");
-      await updateCategory(categoryId, categoryName);
-    } else {
-      await createCategory(categoryName);
-    }
+    const categoryId = categoryForm.getAttribute("data-category-id");
+    await updateCategory(categoryId, categoryName);
+
+    await (categoryId
+      ? updateCategory(categoryId, categoryName)
+      : createCategory(categoryName));
 
     categoryForm.reset();
 
-    categoryForm.removeAttribute("data-mode");
     categoryForm.removeAttribute("data-category-id");
 
     fetchCategoryList();
