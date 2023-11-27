@@ -344,4 +344,25 @@ router.post("/cart", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.get("/cart/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const cartItemsSql = `
+      SELECT cart.cart_id, cart.user_id, cart.product_id, cart.quantity, cart.created_at, cart.updated_at, products.product_name
+      FROM cart
+      INNER JOIN products ON cart.product_id = products.product_id
+      WHERE cart.user_id = ?
+    `;
+
+    const [cartItems] = await db.promise().query(cartItemsSql, [userId]);
+
+    res.status(200).json(cartItems);
+  } catch (error) {
+    console.error("Error fetching cart items:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

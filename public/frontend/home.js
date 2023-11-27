@@ -1,6 +1,6 @@
-import ShoppingCart from "./cart.js";
+import { addToCart, getCookie, getCartItems } from "./cart.js";
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   const productForm = document.getElementById("productForm");
   const productList = document.getElementById("productList");
   const categoryForm = document.getElementById("categoryForm");
@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const updateCategoryForm = document.getElementById("updateCategoryForm");
   const updateCategoryBtn = document.getElementById("updateCategoryBtn");
+
+  const cartList = document.getElementById("cartList");
 
   updateProductBtn.addEventListener("click", async function () {
     const productId = updateProductForm.getAttribute("data-product-id");
@@ -333,37 +335,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
-  }
-
-  async function addToCart(productId) {
-    try {
-      const userId = getCookie("userId");
-      const response = await fetch("/cart", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          product_id: productId,
-          quantity: 1,
-        }),
-      });
-
-      if (response.ok) {
-        console.log("Product added to cart successfully");
-      } else {
-        console.error("Failed to add product to cart");
-      }
-    } catch (error) {
-      console.error("Error adding product to cart:", error);
-    }
-  }
-
   async function deleteProduct(productId) {
     const response = await fetch(`/products/${productId}`, {
       method: "DELETE",
@@ -381,6 +352,19 @@ document.addEventListener("DOMContentLoaded", function () {
     fetchCategoryList();
     fetchCategoriesForSelect();
   }
+
+  function renderCartItems(cartItems) {
+    cartList.innerHTML = "";
+
+    cartItems.forEach((item) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = `Product Name: ${item.product_name}, Quantity: ${item.quantity}`;
+      cartList.appendChild(listItem);
+    });
+  }
+
+  const initialCartItems = await getCartItems();
+  renderCartItems(initialCartItems);
 
   fetchProductList();
   fetchCategoryList();
