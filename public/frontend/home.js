@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const updateCategorySelect = document.getElementById("updateCategory");
   const updateProductBtn = document.getElementById("updateProductBtn");
 
+  const updateCategoryForm = document.getElementById("updateCategoryForm");
+  const updateCategoryBtn = document.getElementById("updateCategoryBtn");
+
   updateProductBtn.addEventListener("click", async function () {
     const productId = updateProductForm.getAttribute("data-product-id");
     const productName = document.getElementById("updateProductName").value;
@@ -25,6 +28,13 @@ document.addEventListener("DOMContentLoaded", function () {
       category,
       productDescription
     );
+  });
+
+  updateCategoryBtn.addEventListener("click", async function () {
+    const categoryId = updateCategoryForm.getAttribute("data-category-id");
+    const categoryName = document.getElementById("updateCategoryName").value;
+
+    await updateCategory(categoryId, categoryName);
   });
 
   productForm.addEventListener("submit", async function (e) {
@@ -146,21 +156,43 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const categoryName = document.getElementById("categoryName").value;
 
-    const response = await fetch("/categories", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        categoryName,
-      }),
-    });
+    if (categoryForm.getAttribute("data-mode") === "update") {
+      const categoryId = categoryForm.getAttribute("data-category-id");
+      await updateCategory(categoryId, categoryName);
+    } else {
+      await createCategory(categoryName);
+    }
 
     categoryForm.reset();
+
+    categoryForm.removeAttribute("data-mode");
+    categoryForm.removeAttribute("data-category-id");
 
     fetchCategoryList();
     fetchCategoriesForSelect();
   });
+
+  async function createCategory(categoryName) {
+    try {
+      const response = await fetch("/categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          categoryName,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Category created successfully");
+      } else {
+        console.error("Failed to create category");
+      }
+    } catch (error) {
+      console.error("Error during category creation:", error);
+    }
+  }
 
   async function fetchProductList() {
     const productsResponse = await fetch("/products");
@@ -202,22 +234,74 @@ document.addEventListener("DOMContentLoaded", function () {
       const listItem = document.createElement("li");
       listItem.textContent = `Name: ${category.category_name}`;
 
+      const updateButton = document.createElement("button");
+      updateButton.textContent = "Update";
+      updateButton.addEventListener("click", function () {
+        handleUpdateCategory(category.category_id);
+      });
+
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "Delete";
       deleteButton.addEventListener("click", function () {
         deleteCategory(category.category_id);
       });
 
-      listItem.appendChild(deleteButton);
-
-      // Create a new option element and clone it
       const option = document.createElement("option");
       option.value = category.category_name;
       option.textContent = category.category_name;
 
       updateCategorySelect.appendChild(option.cloneNode(true));
+
+      listItem.appendChild(updateButton);
+
+      listItem.appendChild(deleteButton);
+
       categoryList.appendChild(listItem);
     });
+  }
+
+  async function handleUpdateCategory(categoryId) {
+    const response = await fetch(`/categories/${categoryId}`);
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      console.error(`Error fetching category details: ${errorMessage}`);
+      return;
+    }
+    const categoryDetails = await response.json();
+
+    updateCategoryForm.setAttribute("data-category-id", categoryId);
+
+    document.getElementById("updateCategoryName").value =
+      categoryDetails.category_name;
+
+    updateCategoryForm.style.display = "block";
+  }
+
+  async function updateCategory(categoryId, categoryName) {
+    try {
+      const response = await fetch(`/categories/${categoryId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          categoryName,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Category updated successfully");
+
+        updateCategoryForm.style.display = "none";
+        document.getElementById("updateCategoryName").value = "";
+
+        fetchCategoryList();
+      } else {
+        console.error("Failed to update category");
+      }
+    } catch (error) {
+      console.error("Error during category update:", error);
+    }
   }
 
   async function fetchCategoriesForSelect() {

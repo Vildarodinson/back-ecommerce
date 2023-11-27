@@ -253,4 +253,49 @@ router.delete("/categories/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.put("/categories/:id", async (req, res) => {
+  const categoryId = req.params.id;
+  const { categoryName } = req.body;
+
+  try {
+    const [categoryResult] = await db
+      .promise()
+      .query("SELECT * FROM categories WHERE category_id = ?", [categoryId]);
+
+    if (categoryResult.length === 0) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    const updateCategorySql =
+      "UPDATE categories SET category_name = ? WHERE category_id = ?";
+    await db.promise().query(updateCategorySql, [categoryName, categoryId]);
+
+    console.log("Category updated successfully");
+    res.status(200).json({ message: "Category updated successfully" });
+  } catch (error) {
+    console.error("Error during category update:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/categories/:id", async (req, res) => {
+  const categoryId = req.params.id;
+
+  try {
+    const [categoryResult] = await db
+      .promise()
+      .query("SELECT * FROM categories WHERE category_id = ?", [categoryId]);
+
+    if (categoryResult.length === 0) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    res.status(200).json(categoryResult[0]);
+  } catch (error) {
+    console.error("Error fetching category details:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
