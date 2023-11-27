@@ -1,4 +1,11 @@
-import { addToCart, getCookie, getCartItems } from "./cart.js";
+import {
+  addToCart,
+  getCookie,
+  getCartItems,
+  deleteCartItem,
+  CartItemAndRender,
+  updateCartItemQuantity,
+} from "./cart.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
   const productForm = document.getElementById("productForm");
@@ -353,20 +360,56 @@ document.addEventListener("DOMContentLoaded", async function () {
     fetchCategoriesForSelect();
   }
 
-  function renderCartItems(cartItems) {
-    cartList.innerHTML = "";
-
-    cartItems.forEach((item) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `Product Name: ${item.product_name}, Quantity: ${item.quantity}`;
-      cartList.appendChild(listItem);
-    });
-  }
-
-  const initialCartItems = await getCartItems();
-  renderCartItems(initialCartItems);
-
   fetchProductList();
   fetchCategoryList();
   fetchCategoriesForSelect();
 });
+
+export async function renderCartItems(cartItems) {
+  cartList.innerHTML = "";
+
+  cartItems.forEach((item) => {
+    const listItem = document.createElement("li");
+
+    const productInfo = document.createElement("div");
+    productInfo.textContent = `Product Name: ${item.product_name}, Quantity: ${item.quantity}`;
+
+    const quantityControls = document.createElement("div");
+
+    const increaseButton = document.createElement("button");
+    increaseButton.textContent = "+";
+    increaseButton.addEventListener("click", async function () {
+      await updateCartItemQuantity(item.cart_id, item.quantity + 1);
+    });
+
+    const decreaseButton = document.createElement("button");
+    decreaseButton.textContent = "-";
+    decreaseButton.addEventListener("click", async function () {
+      if (item.quantity > 1) {
+        await updateCartItemQuantity(item.cart_id, item.quantity - 1);
+      }
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", async function () {
+      const success = await CartItemAndRender(item.cart_id);
+      if (success) {
+        const updatedCartItems = await getCartItems();
+        renderCartItems(updatedCartItems);
+      }
+    });
+
+    quantityControls.appendChild(increaseButton);
+    quantityControls.appendChild(decreaseButton);
+
+    listItem.appendChild(productInfo);
+    listItem.appendChild(quantityControls);
+    listItem.appendChild(deleteButton);
+
+    cartList.appendChild(listItem);
+  });
+}
+
+const initialCartItems = await getCartItems();
+renderCartItems(initialCartItems);

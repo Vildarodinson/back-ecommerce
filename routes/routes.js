@@ -365,4 +365,56 @@ router.get("/cart/:userId", async (req, res) => {
   }
 });
 
+router.delete("/cart/:cartId", async (req, res) => {
+  const cartId = req.params.cartId;
+
+  try {
+    const deleteCartItemSql = `
+      DELETE FROM cart
+      WHERE cart_id = ?
+    `;
+
+    const [result] = await db.promise().query(deleteCartItemSql, [cartId]);
+
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: "Cart item deleted successfully" });
+    } else {
+      res.status(404).json({ error: "Cart item not found" });
+    }
+  } catch (error) {
+    console.error("Error deleting cart item:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/cart/:cartId", async (req, res) => {
+  const cartId = req.params.cartId;
+  const { quantity } = req.body;
+
+  try {
+    const [cartItemResult] = await db
+      .promise()
+      .query("SELECT * FROM cart WHERE cart_id = ?", [cartId]);
+
+    if (cartItemResult.length === 0) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
+    const updateCartItemSql = `
+      UPDATE cart
+      SET quantity = ?
+      WHERE cart_id = ?
+    `;
+    await db.promise().query(updateCartItemSql, [quantity, cartId]);
+
+    console.log("Cart item quantity updated successfully");
+    res
+      .status(200)
+      .json({ message: "Cart item quantity updated successfully" });
+  } catch (error) {
+    console.error("Error updating cart item quantity:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
