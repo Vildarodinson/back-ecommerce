@@ -15,15 +15,18 @@ document.addEventListener("DOMContentLoaded", function () {
         body: JSON.stringify({ username, password }),
       });
 
-      const result = await response.text();
+      const result = await response.json();
 
-      if (result.includes("successful")) {
-        document.getElementById("loginMessage").textContent = result;
+      if (result.message === "Login successful!") {
+        document.getElementById("loginMessage").textContent = result.message;
+
+        document.cookie = `userId=${result.userId}; path=/;`;
+
         setTimeout(function () {
           window.location.href = "home.html";
         }, 10);
       } else {
-        document.getElementById("loginMessage").textContent = result;
+        document.getElementById("loginMessage").textContent = result.error;
       }
     });
 });

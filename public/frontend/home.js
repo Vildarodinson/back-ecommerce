@@ -39,6 +39,12 @@ document.addEventListener("DOMContentLoaded", function () {
     await updateCategory(categoryId, categoryName);
   });
 
+  const addToCartButton = document.createElement("button");
+  addToCartButton.textContent = "Add To Cart";
+  addToCartButton.addEventListener("click", function () {
+    addToCart(product.product_id);
+  });
+
   productForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -212,6 +218,12 @@ document.addEventListener("DOMContentLoaded", function () {
         handleUpdateProduct(product.product_id);
       });
 
+      const addToCartButton = document.createElement("button");
+      addToCartButton.textContent = "Add To Cart";
+      addToCartButton.addEventListener("click", function () {
+        addToCart(product.product_id);
+      });
+
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "Delete";
       deleteButton.addEventListener("click", function () {
@@ -219,6 +231,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       listItem.appendChild(updateButton);
+      listItem.appendChild(addToCartButton);
       listItem.appendChild(deleteButton);
 
       productList.appendChild(listItem);
@@ -318,6 +331,37 @@ document.addEventListener("DOMContentLoaded", function () {
       option.textContent = category.category_name;
       categorySelect.appendChild(option);
     });
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  async function addToCart(productId) {
+    try {
+      const userId = getCookie("userId");
+      const response = await fetch("/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          product_id: productId,
+          quantity: 1,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Product added to cart successfully");
+      } else {
+        console.error("Failed to add product to cart");
+      }
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+    }
   }
 
   async function deleteProduct(productId) {

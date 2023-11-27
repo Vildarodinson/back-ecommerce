@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
 
   res.cookie("authToken", token, { httpOnly: true });
 
-  res.send("Login successful!");
+  res.json({ message: "Login successful!", userId: user[0].id });
 });
 
 router.post("/products", async (req, res) => {
@@ -298,4 +298,50 @@ router.get("/categories/:id", async (req, res) => {
   }
 });
 
+router.post("/cart", async (req, res) => {
+  const { user_id, product_id, quantity } = req.body;
+
+  try {
+    if (!user_id || !product_id || !quantity) {
+      return res
+        .status(400)
+        .json({ error: "User ID, product ID, and quantity are required" });
+    }
+
+    const [productResult] = await db
+      .promise()
+      .query("SELECT * FROM products WHERE product_id = ?", [product_id]);
+
+    if (productResult.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const [userResult] = await db
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [user_id]);
+
+    if (userResult.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const insertCartSql = `
+      INSERT INTO cart (user_id, product_id, quantity)
+      VALUES (?, ?, ?)
+    `;
+    await db.promise().query(insertCartSql, [user_id, product_id, quantity]);
+
+    console.log("Product added to cart successfully");
+    res.status(201).json({ message: "Product added to cart successfully" });
+  } catch (error) {
+    console.error("Error adding product to cart:", error);
+
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
+      return res
+        .status(500)
+        .json({ error: "Foreign key constraint violation" });
+    }
+
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 module.exports = router;
