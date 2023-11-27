@@ -143,6 +143,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (response.ok) {
         console.log("Product updated successfully");
+
+        updateProductForm.style.display = "none";
+
+        document.getElementById("updateProductName").value = "";
+        document.getElementById("updateProductPrice").value = "";
+        updateCategorySelect.value = "";
+        document.getElementById("updateProductDescription").value = "";
+
+        fetchProductList();
       } else {
         console.error("Failed to update product");
       }
