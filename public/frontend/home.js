@@ -1,3 +1,5 @@
+import ShoppingCart from "./cart.js";
+
 document.addEventListener("DOMContentLoaded", function () {
   const productForm = document.getElementById("productForm");
   const productList = document.getElementById("productList");
