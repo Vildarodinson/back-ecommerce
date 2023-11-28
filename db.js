@@ -1,10 +1,10 @@
 const mysql = require("mysql2");
 
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "admin",
-  password: "admin",
-  database: "ecommerce",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "admin",
+  password: process.env.DB_PASSWORD || "admin",
+  database: process.env.DB_DATABASE || "ecommerce",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

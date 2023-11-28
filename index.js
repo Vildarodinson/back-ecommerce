@@ -3,6 +3,10 @@ const app = express();
 const path = require("path");
 const routes = require("./routes/routes");
 
+process.on("uncaughtException", function (err) {
+  console.log(err);
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.urlencoded({ extended: true }));
