@@ -450,10 +450,8 @@ async function showOrderForm() {
       return;
     }
 
-    // Calculate total price and quantity
     const totalPrice = calculateTotalPrice(cartItems);
 
-    // Create a form with pre-filled values
     const orderForm = document.createElement("form");
     orderForm.innerHTML = `
       <h2>Place Order</h2>
@@ -473,7 +471,6 @@ async function showOrderForm() {
       <button id="submitOrderBtn" type="button">Submit Order</button>
     `;
 
-    // Display ordered products
     const orderedProductsList = orderForm.querySelector("#orderedProducts");
     cartItems.forEach((item) => {
       const listItem = document.createElement("li");
@@ -483,12 +480,10 @@ async function showOrderForm() {
 
     document.body.appendChild(orderForm);
 
-    // Function to submit the order
     const submitOrderButton = document.getElementById("submitOrderBtn");
     submitOrderButton.addEventListener("click", async function () {
       const shippingAddress = document.getElementById("shippingAddress").value;
 
-      // Prepare order details
       const orderDetails = {
         user_id: getCookie("userId"),
         shipping_address: shippingAddress,
@@ -500,20 +495,16 @@ async function showOrderForm() {
         total_price: totalPrice,
       };
 
-      // Call the placeOrder function
       const orderResponse = await placeOrderRequest(orderDetails);
 
       if (orderResponse) {
-        // Optionally handle the order response, e.g., display a confirmation message
         console.log("Order response:", orderResponse);
 
-        // Clear the cart after placing the order
         await clearCart();
         const updatedCartItems = await getCartItems();
         renderCartItems(updatedCartItems);
       }
 
-      // Remove the order form after submitting
       document.body.removeChild(orderForm);
     });
   } catch (error) {
