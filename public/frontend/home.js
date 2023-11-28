@@ -525,7 +525,6 @@ async function showOrderForm() {
       if (orderResponse) {
         console.log("Order response:", orderResponse);
 
-        // await clearCart();
         const updatedCartItems = await getCartItems();
         renderCartItems(updatedCartItems);
       }
