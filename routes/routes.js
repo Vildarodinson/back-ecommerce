@@ -416,4 +416,77 @@ router.put("/cart/:cartId", async (req, res) => {
   }
 });
 
+router.delete("/cart/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  console.log(`Deleting cart items for user with ID ${userId}`);
+
+  try {
+    const deleteCartItemsSql = `
+      DELETE FROM cart
+      WHERE user_id = ?
+    `;
+
+    const [result] = await db.promise().query(deleteCartItemsSql, [userId]);
+
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: "Cart cleared successfully" });
+    } else {
+      res.status(404).json({ error: "Cart not found or already cleared" });
+    }
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/orders", async (req, res) => {
+  const { user_id, product_details, total_price, shipping_address } = req.body;
+
+  try {
+    // Check if user exists
+    const [userResult] = await db
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [user_id]);
+
+    if (userResult.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Insert order into the database
+    const insertOrderSql = `
+      INSERT INTO orders (user_id, total_price, shipping_address, order_date, order_status)
+      VALUES (?, ?, ?, NOW(), 'pending')
+    `;
+    const [orderResult] = await db
+      .promise()
+      .query(insertOrderSql, [user_id, total_price, shipping_address]);
+
+    const orderId = orderResult.insertId;
+
+    // Insert order details into the database
+    const insertOrderDetailsSql = `
+      INSERT INTO order_details (order_id, product_id, quantity)
+      VALUES (?, ?, ?)
+    `;
+    for (const product of product_details) {
+      await db
+        .promise()
+        .query(insertOrderDetailsSql, [
+          orderId,
+          product.product_id,
+          product.quantity,
+        ]);
+    }
+
+    console.log("Order placed successfully");
+
+    res
+      .status(201)
+      .json({ message: "Order placed successfully", order_id: orderId });
+  } catch (error) {
+    console.error("Error placing order:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
