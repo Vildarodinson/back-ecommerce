@@ -443,7 +443,6 @@ router.post("/orders", async (req, res) => {
   const { user_id, product_details, total_price, shipping_address } = req.body;
 
   try {
-    // Check if user exists
     const [userResult] = await db
       .promise()
       .query("SELECT * FROM users WHERE id = ?", [user_id]);
@@ -452,7 +451,6 @@ router.post("/orders", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Insert order into the database
     const insertOrderSql = `
       INSERT INTO orders (user_id, total_price, shipping_address, order_date, order_status)
       VALUES (?, ?, ?, NOW(), 'pending')
@@ -463,7 +461,6 @@ router.post("/orders", async (req, res) => {
 
     const orderId = orderResult.insertId;
 
-    // Insert order details into the database
     const insertOrderDetailsSql = `
       INSERT INTO order_details (order_id, product_id, quantity)
       VALUES (?, ?, ?)
@@ -477,6 +474,12 @@ router.post("/orders", async (req, res) => {
           product.quantity,
         ]);
     }
+
+    const deleteCartItemsSql = `
+      DELETE FROM cart
+      WHERE user_id = ?
+    `;
+    await db.promise().query(deleteCartItemsSql, [user_id]);
 
     console.log("Order placed successfully");
 
