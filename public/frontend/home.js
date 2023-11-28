@@ -5,6 +5,8 @@ import {
   deleteCartItem,
   CartItemAndRender,
   updateCartItemQuantity,
+  clearCart,
+  placeOrderRequest,
 } from "./cart.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
@@ -509,47 +511,6 @@ async function showOrderForm() {
     });
   } catch (error) {
     console.error("Error showing order form:", error);
-  }
-}
-
-async function placeOrderRequest(orderDetails) {
-  try {
-    const response = await fetch("/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderDetails),
-    });
-
-    if (response.ok) {
-      const order = await response.json();
-      return order;
-    } else {
-      console.error("Failed to place order");
-      return null;
-    }
-  } catch (error) {
-    console.error("Error placing order:", error);
-    return null;
-  }
-}
-
-async function clearCart() {
-  const userId = getCookie("userId");
-
-  try {
-    const response = await fetch(`/cart/${userId}`, {
-      method: "DELETE",
-    });
-
-    if (response.ok) {
-      console.log("Cart cleared successfully");
-    } else {
-      console.error("Failed to clear cart");
-    }
-  } catch (error) {
-    console.error("Error clearing cart:", error);
   }
 }
 
