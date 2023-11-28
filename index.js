@@ -22,6 +22,12 @@ app.get("/", (req, res) => {
   res.redirect("login.html");
 });
 
+app.get("/*.html", (req, res) => {
+  const fileName = req.params[0];
+  res.sendFile(path.join(__dirname, "public", "frontend", `${fileName}.html`));
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
