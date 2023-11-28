@@ -3,7 +3,7 @@ const app = express();
 const path = require("path");
 const routes = require("./routes/routes");
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -26,7 +26,6 @@ app.get("/*.html", (req, res) => {
   const fileName = req.params[0];
   res.sendFile(path.join(__dirname, "public", "frontend", `${fileName}.html`));
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

@@ -57,3 +57,4 @@ ehthumbs.db
 *.sqlite3
 *.xlsx
 *.pdf
+.vercel
