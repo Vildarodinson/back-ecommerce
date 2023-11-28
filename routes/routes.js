@@ -350,12 +350,11 @@ router.get("/cart/:userId", async (req, res) => {
 
   try {
     const cartItemsSql = `
-      SELECT cart.cart_id, cart.user_id, cart.product_id, cart.quantity, cart.created_at, cart.updated_at, products.product_name
+      SELECT cart.cart_id, cart.user_id, cart.product_id, cart.quantity, cart.created_at, cart.updated_at, products.product_name, products.price
       FROM cart
       INNER JOIN products ON cart.product_id = products.product_id
       WHERE cart.user_id = ?
     `;
-
     const [cartItems] = await db.promise().query(cartItemsSql, [userId]);
 
     res.status(200).json(cartItems);

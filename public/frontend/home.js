@@ -372,7 +372,12 @@ export async function renderCartItems(cartItems) {
     const listItem = document.createElement("li");
 
     const productInfo = document.createElement("div");
-    productInfo.textContent = `Product Name: ${item.product_name}, Quantity: ${item.quantity}`;
+
+    const totalPrice = item.quantity * item.price;
+
+    productInfo.textContent = `Product Name: ${item.product_name}, Quantity: ${
+      item.quantity
+    }, Price: ${totalPrice.toFixed(2)}`;
 
     const quantityControls = document.createElement("div");
 
@@ -397,6 +402,7 @@ export async function renderCartItems(cartItems) {
       if (success) {
         const updatedCartItems = await getCartItems();
         renderCartItems(updatedCartItems);
+        updateTotalPrice(updatedCartItems);
       }
     });
 
@@ -409,6 +415,26 @@ export async function renderCartItems(cartItems) {
 
     cartList.appendChild(listItem);
   });
+
+  updateTotalPrice(cartItems);
+}
+
+export function calculateTotalPrice(cartItems) {
+  let totalPrice = 0;
+
+  cartItems.forEach((item) => {
+    totalPrice += item.quantity * item.price;
+  });
+
+  return totalPrice.toFixed(2);
+}
+
+function updateTotalPrice(cartItems) {
+  const totalElement = document.getElementById("totalPrice");
+
+  const totalPrice = calculateTotalPrice(cartItems);
+
+  totalElement.textContent = `Total Price: $${totalPrice}`;
 }
 
 const initialCartItems = await getCartItems();
