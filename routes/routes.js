@@ -18,11 +18,25 @@ router.post("/register", async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const insertUserSql = "INSERT INTO users (username, password) VALUES (?, ?)";
-  await db.promise().query(insertUserSql, [username, hashedPassword]);
+  const [result] = await db
+    .promise()
+    .query(insertUserSql, [username, hashedPassword]);
+
+  const userId = result.insertId; // Get the ID of the newly inserted user
+
+  const token = jwt.sign({ userId, username }, "SecretKey", {
+    expiresIn: "2h",
+  });
+
+  res.cookie("authToken", token, { httpOnly: true });
 
   console.log("User registered successfully");
 
-  res.status(201).json({ message: "User registered successfully" });
+  res.json({
+    message: "User registered successfully",
+    userId,
+    token,
+  });
 });
 
 router.post("/login", async (req, res) => {
@@ -49,13 +63,18 @@ router.post("/login", async (req, res) => {
     { userId: user[0].id, username: user[0].username },
     "SecretKey",
     {
-      expiresIn: "1h",
+      expiresIn: "2h",
     }
   );
 
   res.cookie("authToken", token, { httpOnly: true });
 
   res.json({ message: "Login successful!", userId: user[0].id });
+});
+
+router.post("/logout", (req, res) => {
+  res.clearCookie("authToken");
+  res.json({ message: "Logout successful" });
 });
 
 router.post("/products", async (req, res) => {
@@ -360,28 +379,6 @@ router.get("/cart/:userId", async (req, res) => {
     res.status(200).json(cartItems);
   } catch (error) {
     console.error("Error fetching cart items:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.delete("/cart/:cartId", async (req, res) => {
-  const cartId = req.params.cartId;
-
-  try {
-    const deleteCartItemSql = `
-      DELETE FROM cart
-      WHERE cart_id = ?
-    `;
-
-    const [result] = await db.promise().query(deleteCartItemSql, [cartId]);
-
-    if (result.affectedRows > 0) {
-      res.status(200).json({ message: "Cart item deleted successfully" });
-    } else {
-      res.status(404).json({ error: "Cart item not found" });
-    }
-  } catch (error) {
-    console.error("Error deleting cart item:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

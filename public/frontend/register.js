@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (response.ok) {
         console.log("Registration successful!");
 
-        window.location.href = "login.html";
+        window.location.href = "home.html";
       } else {
         const errorData = await response.json();
         console.error(`Registration failed: ${errorData.error}`);

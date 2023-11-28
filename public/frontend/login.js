@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         setTimeout(function () {
           window.location.href = "home.html";
-        }, 10);
+        }, 500);
       } else {
         document.getElementById("loginMessage").textContent = result.error;
       }

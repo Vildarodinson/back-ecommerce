@@ -5,7 +5,7 @@ import {
   deleteCartItem,
   CartItemAndRender,
   updateCartItemQuantity,
-  clearCart,
+  // clearCart,
   placeOrderRequest,
 } from "./cart.js";
 
@@ -24,6 +24,28 @@ document.addEventListener("DOMContentLoaded", async function () {
   const updateCategoryBtn = document.getElementById("updateCategoryBtn");
 
   const cartList = document.getElementById("cartList");
+
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  logoutBtn.addEventListener("click", async function () {
+    try {
+      const response = await fetch("/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        console.log("Logout successful");
+
+        window.location.href = "login.html";
+      } else {
+        const errorData = await response.json();
+        console.error(`Logout failed: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("Internal server error");
+    }
+  });
 
   updateProductBtn.addEventListener("click", async function () {
     const productId = updateProductForm.getAttribute("data-product-id");
@@ -483,6 +505,7 @@ async function showOrderForm() {
     document.body.appendChild(orderForm);
 
     const submitOrderButton = document.getElementById("submitOrderBtn");
+
     submitOrderButton.addEventListener("click", async function () {
       const shippingAddress = document.getElementById("shippingAddress").value;
 
@@ -502,7 +525,7 @@ async function showOrderForm() {
       if (orderResponse) {
         console.log("Order response:", orderResponse);
 
-        await clearCart();
+        // await clearCart();
         const updatedCartItems = await getCartItems();
         renderCartItems(updatedCartItems);
       }

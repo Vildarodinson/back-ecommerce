@@ -109,23 +109,23 @@ export async function updateCartItemQuantity(cartId, newQuantity) {
   }
 }
 
-export async function clearCart() {
-  const userId = getCookie("userId");
+// export async function clearCart() {
+//   const userId = getCookie("userId");
 
-  try {
-    const response = await fetch(`/cart/${userId}`, {
-      method: "DELETE",
-    });
+//   try {
+//     const response = await fetch(`/cart/${userId}`, {
+//       method: "DELETE",
+//     });
 
-    if (response.ok) {
-      console.log("Cart cleared successfully");
-    } else {
-      console.error("Failed to clear cart");
-    }
-  } catch (error) {
-    console.error("Error clearing cart:", error);
-  }
-}
+//     if (response.ok) {
+//       console.log("Cart cleared successfully");
+//     } else {
+//       console.error("Failed to clear cart");
+//     }
+//   } catch (error) {
+//     console.error("Error clearing cart:", error);
+//   }
+// }
 
 export async function placeOrderRequest(orderDetails) {
   try {
