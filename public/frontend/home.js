@@ -241,34 +241,40 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     productList.innerHTML = "";
 
-    products.forEach((product) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `Name: ${product.product_name}, Price: ${product.price}, Category: ${product.category_name}, Description: ${product.description}`;
+    console.log("Products:", products);
 
-      const updateButton = document.createElement("button");
-      updateButton.textContent = "Update";
-      updateButton.addEventListener("click", function () {
-        handleUpdateProduct(product.product_id);
+    if (Array.isArray(products)) {
+      products.forEach((product) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `Name: ${product.product_name}, Price: ${product.price}, Category: ${product.category_name}, Description: ${product.description}`;
+
+        const updateButton = document.createElement("button");
+        updateButton.textContent = "Update";
+        updateButton.addEventListener("click", function () {
+          handleUpdateProduct(product.product_id);
+        });
+
+        const addToCartButton = document.createElement("button");
+        addToCartButton.textContent = "Add To Cart";
+        addToCartButton.addEventListener("click", function () {
+          addToCart(product.product_id);
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", function () {
+          deleteProduct(product.product_id);
+        });
+
+        listItem.appendChild(updateButton);
+        listItem.appendChild(addToCartButton);
+        listItem.appendChild(deleteButton);
+
+        productList.appendChild(listItem);
       });
-
-      const addToCartButton = document.createElement("button");
-      addToCartButton.textContent = "Add To Cart";
-      addToCartButton.addEventListener("click", function () {
-        addToCart(product.product_id);
-      });
-
-      const deleteButton = document.createElement("button");
-      deleteButton.textContent = "Delete";
-      deleteButton.addEventListener("click", function () {
-        deleteProduct(product.product_id);
-      });
-
-      listItem.appendChild(updateButton);
-      listItem.appendChild(addToCartButton);
-      listItem.appendChild(deleteButton);
-
-      productList.appendChild(listItem);
-    });
+    } else {
+      console.error("Products response is not an array:", products);
+    }
   }
 
   async function fetchCategoryList() {

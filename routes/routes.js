@@ -8,73 +8,127 @@ const db = require("../db");
 router.post("/register", async (req, res) => {
   const { username, password } = req.body;
 
-  const checkUserSql = "SELECT * FROM users WHERE username = ?";
-  const [existingUser] = await db.promise().query(checkUserSql, [username]);
+  let result;
 
-  if (existingUser.length > 0) {
-    return res.status(400).json({ error: "User already exists" });
+  try {
+    console.log("Received registration request:", { username, password });
+
+    const checkUserSql = "SELECT * FROM users WHERE username = $1";
+    result = await db.query(checkUserSql, [username]);
+
+    const existingUser = result.rows;
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    console.log("Hashed password:", hashedPassword);
+
+    const insertUserSql =
+      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id";
+    result = await db.query(insertUserSql, [username, hashedPassword]);
+
+    const userId = result.rows[0].id;
+
+    console.log("User registered successfully");
+
+    const token = jwt.sign({ userId, username }, "SecretKey", {
+      expiresIn: "2h",
+    });
+
+    res.cookie("authToken", token, { httpOnly: true });
+
+    res.json({
+      message: "User registered successfully",
+      userId,
+      token,
+    });
+  } catch (error) {
+    console.error("Error during registration:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const insertUserSql = "INSERT INTO users (username, password) VALUES (?, ?)";
-  const [result] = await db
-    .promise()
-    .query(insertUserSql, [username, hashedPassword]);
-
-  const userId = result.insertId; // Get the ID of the newly inserted user
-
-  const token = jwt.sign({ userId, username }, "SecretKey", {
-    expiresIn: "2h",
-  });
-
-  res.cookie("authToken", token, { httpOnly: true });
-
-  console.log("User registered successfully");
-
-  res.json({
-    message: "User registered successfully",
-    userId,
-    token,
-  });
 });
 
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  const getUserSql = "SELECT * FROM users WHERE username = ?";
-  const [user] = await db.promise().query(getUserSql, [username]);
+  try {
+    const getUserSql = "SELECT * FROM users WHERE username = $1";
+    const { rows: user } = await db.query(getUserSql, [username]);
 
-  if (user.length === 0) {
-    return res
-      .status(401)
-      .json({ error: "Authentication failed. User not found." });
-  }
-
-  const isPasswordValid = await bcrypt.compare(password, user[0].password);
-
-  if (!isPasswordValid) {
-    return res
-      .status(401)
-      .json({ error: "Authentication failed. Incorrect password." });
-  }
-
-  const token = jwt.sign(
-    { userId: user[0].id, username: user[0].username },
-    "SecretKey",
-    {
-      expiresIn: "2h",
+    if (user.length === 0) {
+      return res
+        .status(401)
+        .json({ error: "Authentication failed. User not found." });
     }
-  );
 
-  res.cookie("authToken", token, { httpOnly: true });
+    const isPasswordValid = await bcrypt.compare(password, user[0].password);
 
-  res.json({ message: "Login successful!", userId: user[0].id });
+    if (!isPasswordValid) {
+      return res
+        .status(401)
+        .json({ error: "Authentication failed. Incorrect password." });
+    }
+
+    const token = jwt.sign(
+      { userId: user[0].id, username: user[0].username },
+      "SecretKey",
+      {
+        expiresIn: "2h",
+      }
+    );
+
+    res.cookie("authToken", token, { httpOnly: true });
+
+    res.json({ message: "Login successful!", userId: user[0].id });
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-router.post("/logout", (req, res) => {
-  res.clearCookie("authToken");
-  res.json({ message: "Logout successful" });
+router.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    console.log("Received login request:", { username, password });
+
+    const getUserSql = "SELECT * FROM users WHERE username = $1";
+    const { rows: users } = await db.query(getUserSql, [username]);
+
+    if (users.length === 0) {
+      return res
+        .status(401)
+        .json({ error: "Authentication failed. User not found." });
+    }
+
+    const user = users[0];
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res
+        .status(401)
+        .json({ error: "Authentication failed. Incorrect password." });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, username: user.username },
+      "SecretKey",
+      {
+        expiresIn: "2h",
+      }
+    );
+
+    res.cookie("authToken", token, { httpOnly: true });
+
+    res.json({ message: "Login successful!", userId: user.id });
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 router.post("/products", async (req, res) => {

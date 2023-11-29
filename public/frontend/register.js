@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (response.ok) {
+        const responseData = await response.json();
         console.log("Registration successful!");
 
         window.location.href = "home.html";
