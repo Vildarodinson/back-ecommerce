@@ -5,6 +5,10 @@ const db = mysql.createConnection({
   user: process.env.DB_USER || "admin",
   password: process.env.DB_PASSWORD || "admin",
   database: process.env.DB_DATABASE || "ecommerce",
+  connectionString:
+    process.env.DATABASE_URL ||
+    "postgresql://andrew:Hj132VSu8h51RxeXzL22qQ@warm-nutria-1579.g8x.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full",
+
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
