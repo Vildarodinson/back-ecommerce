@@ -89,46 +89,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-
-  try {
-    console.log("Received login request:", { username, password });
-
-    const getUserSql = "SELECT * FROM users WHERE username = $1";
-    const { rows: users } = await db.query(getUserSql, [username]);
-
-    if (users.length === 0) {
-      return res
-        .status(401)
-        .json({ error: "Authentication failed. User not found." });
-    }
-
-    const user = users[0];
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res
-        .status(401)
-        .json({ error: "Authentication failed. Incorrect password." });
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      "SecretKey",
-      {
-        expiresIn: "2h",
-      }
-    );
-
-    res.cookie("authToken", token, { httpOnly: true });
-
-    res.json({ message: "Login successful!", userId: user.id });
-  } catch (error) {
-    console.error("Error during login:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+router.post("/logout", (req, res) => {
+  res.clearCookie("authToken");
+  res.json({ message: "Logout successful" });
 });
 
 router.post("/products", async (req, res) => {
@@ -136,28 +99,25 @@ router.post("/products", async (req, res) => {
 
   try {
     // Checking
-    const [categoryResult] = await db
-      .promise()
-      .query("SELECT category_id FROM categories WHERE category_name = ?", [
-        category,
-      ]);
+    const categoryResult = await db.query(
+      "SELECT category_id FROM categories WHERE category_name = $1",
+      [category]
+    );
 
-    if (categoryResult.length === 0) {
+    if (categoryResult.rows.length === 0) {
       return res.status(400).json({ error: "Invalid category" });
     }
 
     const insertProductSql = `
         INSERT INTO products (product_name, category_id, price, description)
-        VALUES (?, ?, ?, ?)
+        VALUES ($1, $2, $3, $4)
     `;
-    await db
-      .promise()
-      .query(insertProductSql, [
-        productName,
-        categoryResult[0].category_id,
-        productPrice,
-        productDescription,
-      ]);
+    await db.query(insertProductSql, [
+      productName,
+      categoryResult.rows[0].category_id,
+      productPrice,
+      productDescription,
+    ]);
 
     console.log("Product created successfully");
     res.status(201).json({ message: "Product created successfully" });
@@ -174,7 +134,7 @@ router.get("/products", async (req, res) => {
       FROM products
       JOIN categories ON products.category_id = categories.category_id
     `;
-    const [products] = await db.promise().query(productsSql);
+    const { rows: products } = await db.query(productsSql);
 
     res.status(200).json(products);
   } catch (error) {
@@ -187,15 +147,16 @@ router.get("/products/:id", async (req, res) => {
   const productId = req.params.id;
 
   try {
-    const [productResult] = await db
-      .promise()
-      .query("SELECT * FROM products WHERE product_id = ?", [productId]);
+    const productResult = await db.query(
+      "SELECT * FROM products WHERE product_id = $1",
+      [productId]
+    );
 
-    if (productResult.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    res.status(200).json(productResult[0]);
+    res.status(200).json(productResult.rows[0]);
   } catch (error) {
     console.error("Error fetching product details:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -208,38 +169,36 @@ router.put("/products/:id", async (req, res) => {
 
   try {
     // Checking
-    const [productResult] = await db
-      .promise()
-      .query("SELECT * FROM products WHERE product_id = ?", [productId]);
+    const productResult = await db.query(
+      "SELECT * FROM products WHERE product_id = $1",
+      [productId]
+    );
 
-    if (productResult.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    const [categoryResult] = await db
-      .promise()
-      .query("SELECT category_id FROM categories WHERE category_name = ?", [
-        category,
-      ]);
+    const categoryResult = await db.query(
+      "SELECT category_id FROM categories WHERE category_name = $1",
+      [category]
+    );
 
-    if (categoryResult.length === 0) {
+    if (categoryResult.rows.length === 0) {
       return res.status(400).json({ error: "Invalid category" });
     }
 
     const updateProductSql = `
       UPDATE products
-      SET product_name = ?, category_id = ?, price = ?, description = ?
-      WHERE product_id = ?
+      SET product_name = $1, category_id = $2, price = $3, description = $4
+      WHERE product_id = $5
     `;
-    await db
-      .promise()
-      .query(updateProductSql, [
-        productName,
-        categoryResult[0].category_id,
-        productPrice,
-        productDescription,
-        productId,
-      ]);
+    await db.query(updateProductSql, [
+      productName,
+      categoryResult.rows[0].category_id,
+      productPrice,
+      productDescription,
+      productId,
+    ]);
 
     console.log("Product updated successfully");
     res.status(200).json({ message: "Product updated successfully" });
@@ -254,17 +213,16 @@ router.delete("/products/:id", async (req, res) => {
 
   try {
     // Checking
-    const [productResult] = await db
-      .promise()
-      .query("SELECT * FROM products WHERE product_id = ?", [productId]);
+    const productResult = await db.query(
+      "SELECT * FROM products WHERE product_id = $1",
+      [productId]
+    );
 
-    if (productResult.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    await db
-      .promise()
-      .query("DELETE FROM products WHERE product_id = ?", [productId]);
+    await db.query("DELETE FROM products WHERE product_id = $1", [productId]);
 
     console.log("Product deleted successfully");
     res.status(200).json({ message: "Product deleted successfully" });
@@ -279,8 +237,8 @@ router.post("/categories", async (req, res) => {
 
   try {
     const insertCategorySql =
-      "INSERT INTO categories (category_name) VALUES (?)";
-    await db.promise().query(insertCategorySql, [categoryName]);
+      "INSERT INTO categories (category_name) VALUES ($1)";
+    await db.query(insertCategorySql, [categoryName]);
 
     console.log("Category created successfully");
     res.status(201).json({ message: "Category created successfully" });
@@ -293,7 +251,7 @@ router.post("/categories", async (req, res) => {
 router.get("/categories", async (req, res) => {
   try {
     const categoriesSql = "SELECT * FROM categories";
-    const [categories] = await db.promise().query(categoriesSql);
+    const { rows: categories } = await db.query(categoriesSql);
 
     res.status(200).json(categories);
   } catch (error) {
@@ -307,17 +265,18 @@ router.delete("/categories/:id", async (req, res) => {
 
   try {
     // Checking
-    const [categoryResult] = await db
-      .promise()
-      .query("SELECT * FROM categories WHERE category_id = ?", [categoryId]);
+    const { rows: categoryResult } = await db.query(
+      "SELECT * FROM categories WHERE category_id = $1",
+      [categoryId]
+    );
 
     if (categoryResult.length === 0) {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    await db
-      .promise()
-      .query("DELETE FROM categories WHERE category_id = ?", [categoryId]);
+    await db.query("DELETE FROM categories WHERE category_id = $1", [
+      categoryId,
+    ]);
 
     console.log("Category deleted successfully");
     res.status(200).json({ message: "Category deleted successfully" });
@@ -332,17 +291,18 @@ router.put("/categories/:id", async (req, res) => {
   const { categoryName } = req.body;
 
   try {
-    const [categoryResult] = await db
-      .promise()
-      .query("SELECT * FROM categories WHERE category_id = ?", [categoryId]);
+    const { rows: categoryResult } = await db.query(
+      "SELECT * FROM categories WHERE category_id = $1",
+      [categoryId]
+    );
 
     if (categoryResult.length === 0) {
       return res.status(404).json({ error: "Category not found" });
     }
 
     const updateCategorySql =
-      "UPDATE categories SET category_name = ? WHERE category_id = ?";
-    await db.promise().query(updateCategorySql, [categoryName, categoryId]);
+      "UPDATE categories SET category_name = $1 WHERE category_id = $2";
+    await db.query(updateCategorySql, [categoryName, categoryId]);
 
     console.log("Category updated successfully");
     res.status(200).json({ message: "Category updated successfully" });
@@ -356,9 +316,10 @@ router.get("/categories/:id", async (req, res) => {
   const categoryId = req.params.id;
 
   try {
-    const [categoryResult] = await db
-      .promise()
-      .query("SELECT * FROM categories WHERE category_id = ?", [categoryId]);
+    const { rows: categoryResult } = await db.query(
+      "SELECT * FROM categories WHERE category_id = $1",
+      [categoryId]
+    );
 
     if (categoryResult.length === 0) {
       return res.status(404).json({ error: "Category not found" });
@@ -381,27 +342,35 @@ router.post("/cart", async (req, res) => {
         .json({ error: "User ID, product ID, and quantity are required" });
     }
 
-    const [productResult] = await db
-      .promise()
-      .query("SELECT * FROM products WHERE product_id = ?", [product_id]);
+    const productResult = await db.query(
+      "SELECT * FROM products WHERE product_id = $1",
+      [product_id]
+    );
 
-    if (productResult.length === 0) {
+    if (productResult.rows.length === 0) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    const [userResult] = await db
-      .promise()
-      .query("SELECT * FROM users WHERE id = ?", [user_id]);
+    const userResult = await db.query("SELECT * FROM users WHERE id = $1", [
+      user_id,
+    ]);
 
-    if (userResult.length === 0) {
+    if (userResult.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Start a transaction
+    await db.query("BEGIN");
+
     const insertCartSql = `
       INSERT INTO cart (user_id, product_id, quantity)
-      VALUES (?, ?, ?)
+      VALUES ($1, $2, $3)
     `;
-    await db.promise().query(insertCartSql, [user_id, product_id, quantity]);
+
+    await db.query(insertCartSql, [user_id, product_id, quantity]);
+
+    // Commit the transaction
+    await db.query("COMMIT");
 
     console.log("Product added to cart successfully");
     res.status(201).json({ message: "Product added to cart successfully" });
@@ -413,6 +382,9 @@ router.post("/cart", async (req, res) => {
         .status(500)
         .json({ error: "Foreign key constraint violation" });
     }
+
+    // Rollback the transaction in case of an error
+    await db.query("ROLLBACK");
 
     res.status(500).json({ error: "Internal server error" });
   }
@@ -426,9 +398,9 @@ router.get("/cart/:userId", async (req, res) => {
       SELECT cart.cart_id, cart.user_id, cart.product_id, cart.quantity, cart.created_at, cart.updated_at, products.product_name, products.price
       FROM cart
       INNER JOIN products ON cart.product_id = products.product_id
-      WHERE cart.user_id = ?
+      WHERE cart.user_id = $1
     `;
-    const [cartItems] = await db.promise().query(cartItemsSql, [userId]);
+    const { rows: cartItems } = await db.query(cartItemsSql, [userId]);
 
     res.status(200).json(cartItems);
   } catch (error) {
@@ -442,9 +414,10 @@ router.put("/cart/:cartId", async (req, res) => {
   const { quantity } = req.body;
 
   try {
-    const [cartItemResult] = await db
-      .promise()
-      .query("SELECT * FROM cart WHERE cart_id = ?", [cartId]);
+    const { rows: cartItemResult } = await db.query(
+      "SELECT * FROM cart WHERE cart_id = $1",
+      [cartId]
+    );
 
     if (cartItemResult.length === 0) {
       return res.status(404).json({ error: "Cart item not found" });
@@ -452,10 +425,10 @@ router.put("/cart/:cartId", async (req, res) => {
 
     const updateCartItemSql = `
       UPDATE cart
-      SET quantity = ?
-      WHERE cart_id = ?
+      SET quantity = $1
+      WHERE cart_id = $2
     `;
-    await db.promise().query(updateCartItemSql, [quantity, cartId]);
+    await db.query(updateCartItemSql, [quantity, cartId]);
 
     console.log("Cart item quantity updated successfully");
     res
@@ -467,25 +440,25 @@ router.put("/cart/:cartId", async (req, res) => {
   }
 });
 
-router.delete("/cart/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  console.log(`Deleting cart items for user with ID ${userId}`);
+router.delete("/cart/:cartId", async (req, res) => {
+  const cartId = req.params.cartId;
+  console.log(`Deleting cart item with ID ${cartId}`);
 
   try {
     const deleteCartItemsSql = `
       DELETE FROM cart
-      WHERE user_id = ?
+      WHERE cart_id = $1
     `;
 
-    const [result] = await db.promise().query(deleteCartItemsSql, [userId]);
+    const [result] = await db.query(deleteCartItemsSql, [cartId]);
 
     if (result.affectedRows > 0) {
-      res.status(200).json({ message: "Cart cleared successfully" });
+      res.status(200).json({ message: "Cart item deleted successfully" });
     } else {
-      res.status(404).json({ error: "Cart not found or already cleared" });
+      res.status(404).json({ error: "Cart item not found" });
     }
   } catch (error) {
-    console.error("Error clearing cart:", error);
+    console.error("Error deleting cart item:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -494,9 +467,10 @@ router.post("/orders", async (req, res) => {
   const { user_id, product_details, total_price, shipping_address } = req.body;
 
   try {
-    const [userResult] = await db
-      .promise()
-      .query("SELECT * FROM users WHERE id = ?", [user_id]);
+    const { rows: userResult } = await db.query(
+      "SELECT * FROM users WHERE id = $1",
+      [user_id]
+    );
 
     if (userResult.length === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -504,33 +478,34 @@ router.post("/orders", async (req, res) => {
 
     const insertOrderSql = `
       INSERT INTO orders (user_id, total_price, shipping_address, order_date, order_status)
-      VALUES (?, ?, ?, NOW(), 'pending')
+      VALUES ($1, $2, $3, NOW(), 'pending')
+      RETURNING order_id
     `;
-    const [orderResult] = await db
-      .promise()
-      .query(insertOrderSql, [user_id, total_price, shipping_address]);
+    const { rows: orderResult } = await db.query(insertOrderSql, [
+      user_id,
+      total_price,
+      shipping_address,
+    ]);
 
-    const orderId = orderResult.insertId;
+    const orderId = orderResult[0].order_id;
 
     const insertOrderDetailsSql = `
       INSERT INTO order_details (order_id, product_id, quantity)
-      VALUES (?, ?, ?)
+      VALUES ($1, $2, $3)
     `;
     for (const product of product_details) {
-      await db
-        .promise()
-        .query(insertOrderDetailsSql, [
-          orderId,
-          product.product_id,
-          product.quantity,
-        ]);
+      await db.query(insertOrderDetailsSql, [
+        orderId,
+        product.product_id,
+        product.quantity,
+      ]);
     }
 
     const deleteCartItemsSql = `
       DELETE FROM cart
-      WHERE user_id = ?
+      WHERE user_id = $1
     `;
-    await db.promise().query(deleteCartItemsSql, [user_id]);
+    await db.query(deleteCartItemsSql, [user_id]);
 
     console.log("Order placed successfully");
 
