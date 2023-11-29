@@ -1,18 +1,30 @@
 const mysql = require("mysql2");
+const { Client } = require("pg");
+const dotenv = require("dotenv");
 
-const db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "admin",
-  password: process.env.DB_PASSWORD || "admin",
-  database: process.env.DB_DATABASE || "ecommerce",
-  connectionString:
-    process.env.DATABASE_URL ||
-    "postgresql://andrew:Hj132VSu8h51RxeXzL22qQ@warm-nutria-1579.g8x.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full",
+dotenv.config();
 
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+let db;
+
+if (process.env.NODE_ENV === "production") {
+  db = new Client({
+    connectionString: process.env.COCKROACH_DB_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+} else {
+  db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+    port: process.env.DB_PORT,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+  });
+}
 
 db.connect((err) => {
   if (err) {
