@@ -1,4 +1,4 @@
-import { getCookie } from "./cart";
+import { getCookie } from "./cart.js";
 
 export async function fetchAndDisplayUserOrders(userId) {
   try {
