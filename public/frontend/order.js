@@ -1,3 +1,5 @@
+import { getCookie } from "./cart";
+
 export async function fetchAndDisplayUserOrders(userId) {
   try {
     const response = await fetch(`/orders/user/${userId}`);

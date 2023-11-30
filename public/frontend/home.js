@@ -5,7 +5,6 @@ import {
   deleteCartItem,
   CartItemAndRender,
   updateCartItemQuantity,
-  // clearCart,
   placeOrderRequest,
 } from "./cart.js";
 
@@ -397,7 +396,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   const userId = getCookie("userId");
-
   await fetchAndDisplayUserOrders(userId);
 
   fetchProductList();
@@ -518,7 +516,12 @@ async function showOrderForm() {
       orderedProductsList.appendChild(listItem);
     });
 
-    document.body.appendChild(orderForm);
+    const placeOrderButton = document.getElementById("placeOrderBtn");
+
+    placeOrderButton.parentNode.insertBefore(
+      orderForm,
+      placeOrderButton.nextSibling
+    );
 
     const submitOrderButton = document.getElementById("submitOrderBtn");
 
@@ -538,6 +541,9 @@ async function showOrderForm() {
 
       const orderResponse = await placeOrderRequest(orderDetails);
 
+      const userId = getCookie("userId");
+      await fetchAndDisplayUserOrders(userId);
+
       if (orderResponse) {
         console.log("Order response:", orderResponse);
 
@@ -545,7 +551,9 @@ async function showOrderForm() {
         renderCartItems(updatedCartItems);
       }
 
-      document.body.removeChild(orderForm);
+      document.body.appendChild(cartList);
+
+      orderForm.parentNode.removeChild(orderForm);
     });
   } catch (error) {
     console.error("Error showing order form:", error);
