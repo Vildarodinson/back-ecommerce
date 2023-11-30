@@ -413,25 +413,25 @@ router.put("/cart/:cartId", async (req, res) => {
   }
 });
 
-router.delete("/cart/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  console.log(`Deleting cart items for user with ID ${userId}`);
+router.delete("/cart/:cartId", async (req, res) => {
+  const cartId = req.params.cartId;
+  console.log(`Deleting cart item with ID ${cartId}`);
 
   try {
     const deleteCartItemsSql = `
       DELETE FROM cart
-      WHERE user_id = ?
+      WHERE cart_id = ?
     `;
 
-    const [result] = await db.promise().query(deleteCartItemsSql, [userId]);
+    const [result] = await db.promise().query(deleteCartItemsSql, [cartId]);
 
     if (result.affectedRows > 0) {
-      res.status(200).json({ message: "Cart cleared successfully" });
+      res.status(200).json({ message: "Cart item deleted successfully" });
     } else {
-      res.status(404).json({ error: "Cart not found or already cleared" });
+      res.status(404).json({ error: "Cart item not found" });
     }
   } catch (error) {
-    console.error("Error clearing cart:", error);
+    console.error("Error deleting cart item:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
