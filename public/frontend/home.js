@@ -9,6 +9,12 @@ import {
   placeOrderRequest,
 } from "./cart.js";
 
+import {
+  fetchAndDisplayUserOrders,
+  renderUserOrders,
+  placeOrderAndRender,
+} from "./order.js";
+
 document.addEventListener("DOMContentLoaded", async function () {
   const productForm = document.getElementById("productForm");
   const productList = document.getElementById("productList");
@@ -389,6 +395,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     fetchCategoryList();
     fetchCategoriesForSelect();
   }
+
+  const userId = getCookie("userId");
+
+  await fetchAndDisplayUserOrders(userId);
 
   fetchProductList();
   fetchCategoryList();
