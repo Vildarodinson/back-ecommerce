@@ -489,4 +489,74 @@ router.post("/orders", async (req, res) => {
   }
 });
 
+router.get("/orders/user/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const userOrdersSql = `
+      SELECT orders.*, order_details.*, products.product_name
+      FROM orders
+      INNER JOIN order_details ON orders.order_id = order_details.order_id
+      INNER JOIN products ON order_details.product_id = products.product_id
+      WHERE orders.user_id = ?
+    `;
+    const [userOrders] = await db.promise().query(userOrdersSql, [userId]);
+
+    const ordersWithDetails = userOrders.reduce((accumulator, order) => {
+      const existingOrder = accumulator.find(
+        (item) => item.order_id === order.order_id
+      );
+      if (existingOrder) {
+        existingOrder.order_details.push({
+          detail_id: order.detail_id,
+          product_id: order.product_id,
+          product_name: order.product_name,
+          quantity: order.quantity,
+        });
+      } else {
+        accumulator.push({
+          order_id: order.order_id,
+          user_id: order.user_id,
+          total_price: order.total_price,
+          shipping_address: order.shipping_address,
+          order_date: order.order_date,
+          order_status: order.order_status,
+          order_details: [
+            {
+              detail_id: order.detail_id,
+              product_id: order.product_id,
+              product_name: order.product_name,
+              quantity: order.quantity,
+            },
+          ],
+        });
+      }
+      return accumulator;
+    }, []);
+
+    res.status(200).json(ordersWithDetails);
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/orders/:orderId", async (req, res) => {
+  const orderId = req.params.orderId;
+
+  try {
+    const cancelOrderSql = "DELETE FROM orders WHERE order_id = ?";
+    const [result] = await db.promise().query(cancelOrderSql, [orderId]);
+
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: "Order canceled successfully" });
+    } else {
+      res.status(404).json({ error: "Order not found" });
+    }
+  } catch (error) {
+    console.error("Error canceling order:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
