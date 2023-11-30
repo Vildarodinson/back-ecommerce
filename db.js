@@ -1,20 +1,21 @@
-const { Pool } = require("pg");
-require("dotenv").config();
+const mysql = require("mysql2");
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "admin",
+  password: "admin",
+  database: "ecommerce",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
-pool.on("error", (err, client) => {
-  console.error("Unexpected error on idle client", err);
-  process.exit(-1);
+db.connect((err) => {
+  if (err) {
+    console.error("Error connecting to the database:", err);
+    return;
+  }
+  console.log("Connected to the database");
 });
 
-module.exports = pool;
+module.exports = db;
