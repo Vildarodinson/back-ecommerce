@@ -1,3 +1,5 @@
+import { getCookie } from "./cart.js";
+
 export async function fetchAndDisplayUserOrders(userId) {
   try {
     const response = await fetch(`/orders/user/${userId}`);
@@ -57,10 +59,16 @@ export function renderUserOrders(userOrders) {
 
 export async function placeOrderAndRender(orderDetails) {
   try {
+    // Render the order locally
+    renderUserOrderLocally(orderDetails);
+
+    // Place the order on the server
     const response = await placeOrderRequest(orderDetails);
+    
     if (response) {
       console.log("Order response:", response);
 
+      // Fetch and display the user's orders
       const userId = getCookie("userId");
       await fetchAndDisplayUserOrders(userId);
     }
