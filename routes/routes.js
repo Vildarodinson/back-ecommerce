@@ -359,7 +359,6 @@ router.post("/cart", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Start a transaction
     await db.query("BEGIN");
 
     const insertCartSql = `
@@ -369,7 +368,6 @@ router.post("/cart", async (req, res) => {
 
     await db.query(insertCartSql, [user_id, product_id, quantity]);
 
-    // Commit the transaction
     await db.query("COMMIT");
 
     console.log("Product added to cart successfully");
@@ -383,7 +381,6 @@ router.post("/cart", async (req, res) => {
         .json({ error: "Foreign key constraint violation" });
     }
 
-    // Rollback the transaction in case of an error
     await db.query("ROLLBACK");
 
     res.status(500).json({ error: "Internal server error" });
