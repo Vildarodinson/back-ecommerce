@@ -22,7 +22,7 @@ router.post("/register", async (req, res) => {
     .promise()
     .query(insertUserSql, [username, hashedPassword]);
 
-  const userId = result.insertId; // Get the ID of the newly inserted user
+  const userId = result.insertId;
 
   const token = jwt.sign({ userId, username }, "SecretKey", {
     expiresIn: "2h",
